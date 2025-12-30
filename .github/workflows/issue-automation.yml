@@ -205,7 +205,25 @@ jobs:
             // Helper: ensure labels exist with desired metadata
             const ensureLabel = async (name, color, description) => {
               try {
-                await github.rest.issues.getLabel({ owner, repo, name });
+                const { data: label } = await github.rest.issues.getLabel({ owner, repo, name });
+                if (
+                  label.color !== color ||
+                  (label.description || '') !== (description || '')
+                ) {
+                  try {
+                    await github.rest.issues.updateLabel({
+                      owner,
+                      repo,
+                      name,
+                      color,
+                      description,
+                    });
+                  } catch (updateError) {
+                    core.warning(
+                      `Error updating label ${name}: ${updateError.message}`
+                    );
+                  }
+                }
               } catch (error) {
                 if (error.status === 404) {
                   try {
